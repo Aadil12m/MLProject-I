@@ -6,7 +6,7 @@ def get_requirements(file_path:str)->list[str]:
     requirements = []
     with open(file_path) as file:
         requirements=file.readlines()
-        [req.replace("\n","") for req in requirements]
+        requirements=[req.replace("\n","") for req in requirements]
     if HYPHEN_E_DOT in requirements:
         requirements.remove(HYPHEN_E_DOT)
     return requirements
