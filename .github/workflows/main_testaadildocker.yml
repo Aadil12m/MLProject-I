@@ -1,0 +1,63 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - testaadildocker
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to container registry
+        uses: docker/login-action@v2
+        with:
+          registry: testaadildocker.azurecr.io/
+          username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_2DDDF7673158403384C8266F10A7F4D1 }}
+          password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_21DD5660E2DC492DA1E473A7EC809415 }}
+
+      - name: Build and push container image to registry
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: testaadildocker.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_2DDDF7673158403384C8266F10A7F4D1 }}/studentperformance:${{ github.sha }}
+          file: ./Dockerfile
+
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    needs: build
+    
+    steps:
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_257909C48AF64E4ABC44E3803125C862 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_541367FBE1644D7B9652F19EBAC2D989 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_02CFAB0DC8884E25905E4C1EABCE6261 }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'testaadildocker'
+          slot-name: 'Production'
+          images: 'testaadildocker.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_2DDDF7673158403384C8266F10A7F4D1 }}/studentperformance:${{ github.sha }}'
+          
